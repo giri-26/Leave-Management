@@ -1,3 +1,8 @@
+require("dotenv").config();
+
+const dns = require("dns");
+dns.setServers(["8.8.8.8", "1.1.1.1"]);
+require("dotenv").config();
 
 const express = require("express");
 const bodyParser = require("body-parser");
@@ -9,29 +14,49 @@ const app = express();
 
 // Middleware
 app.use(bodyParser.json());
+app.use(express.urlencoded({ extended: true }));
 
-// Serve static files from the public directory
+// Serve static files
 app.use(express.static(path.join(__dirname, "public")));
 
 // API Routes
 app.use("/api", leaveRoutes);
 
-// Start the server
-const PORT = process.env.PORT || 5050;
-
-app.use("/api", (req, res) => res.status(404).json({ message: "API route not found" }));
-app.use((error, req, res, next) => {
-    if (res.headersSent) return next(error);
-    res.status(error.status || 500).json({ message: error.status === 400 ? "Invalid JSON request" : "Server error" });
+// Handle unknown API routes
+app.use("/api", (req, res) => {
+    res.status(404).json({
+        message: "API route not found"
+    });
 });
 
-if (require.main === module) {
-    connectDB().then(() => {
-        app.listen(PORT, () => console.log(`Server running at http://localhost:${PORT}`));
-    }).catch((error) => {
-        console.error("MongoDB connection failed:", error.message);
-        process.exitCode = 1;
+// Global error handler
+app.use((error, req, res, next) => {
+    if (res.headersSent) {
+        return next(error);
+    }
+
+    res.status(error.status || 500).json({
+        message: error.status === 400
+            ? "Invalid JSON request"
+            : "Server error"
     });
+});
+
+// Start server after MongoDB connection
+const PORT = process.env.PORT || 5050;
+
+if (require.main === module) {
+    connectDB()
+        .then(() => {
+            app.listen(PORT, () => {
+                console.log(`Server running on port ${PORT}`);
+            });
+        })
+        .catch((error) => {
+            console.error("MongoDB connection failed:", error.message);
+            process.exit(1);
+        });
 }
 
 module.exports = app;
+

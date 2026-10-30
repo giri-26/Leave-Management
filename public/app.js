@@ -1,3 +1,5 @@
+// API Configuration
+const API_BASE_URL = "http://localhost:5050/api";
 
 let userId = null;
 
@@ -37,9 +39,11 @@ function showRegistration() {
 }
 
 // Send API request
-async function apiRequest(url, options = {}) {
-    const response = await fetch(url, options);
+async function apiRequest(endpoint, options = {}) {
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, options);
+
     const responseText = await response.text();
+
     let data = {};
 
     if (responseText) {
@@ -47,18 +51,14 @@ async function apiRequest(url, options = {}) {
             data = JSON.parse(responseText);
         } catch {
             throw new Error(
-                `Server returned an invalid response (HTTP ${response.status}). Check that the API server is running.`
+                `Invalid server response. HTTP ${response.status}`
             );
         }
     }
 
     if (!response.ok) {
-        throw new Error(data.message || `Request failed (HTTP ${response.status})`);
-    }
-
-    if (!responseText) {
         throw new Error(
-            `Server returned an empty response (HTTP ${response.status}). Check that the API server is running.`
+            data.message || `Request failed. HTTP ${response.status}`
         );
     }
 
@@ -103,7 +103,7 @@ async function registerUser(event) {
     }
 
     try {
-        const data = await apiRequest("/api/register", {
+        const data = await apiRequest("/register", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
@@ -150,7 +150,7 @@ async function loginUser(event) {
     }
 
     try {
-        const data = await apiRequest("/api/login", {
+        const data = await apiRequest("/login", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
@@ -217,7 +217,7 @@ async function refreshLeaveBalance() {
 
     try {
         const data = await apiRequest(
-            `/api/leave-balance/${userId}`
+            `/leave-balance/${userId}`
         );
 
         getElement("casual-leave-display").textContent =
@@ -261,7 +261,7 @@ async function applyLeave(event) {
 
     try {
         const data = await apiRequest(
-            `/api/apply-leave/${userId}`,
+            `/apply-leave/${userId}`,
             {
                 method: "POST",
                 headers: {
@@ -303,55 +303,20 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    // Registration
-    addListener(
-        "registration-form",
-        "submit",
-        registerUser
-    );
+    addListener("registration-form", "submit", registerUser);
 
-    // Login
-    addListener(
-        "login-form",
-        "submit",
-        loginUser
-    );
+    addListener("login-form", "submit", loginUser);
 
-    // Logout
-    addListener(
-        "logout-button",
-        "click",
-        logoutUser
-    );
+    addListener("logout-button", "click", logoutUser);
 
-    // Refresh balance
-    addListener(
-        "refresh-balance",
-        "click",
-        refreshLeaveBalance
-    );
+    addListener("refresh-balance", "click", refreshLeaveBalance);
 
-    // Apply leave
-    addListener(
-        "leave-form",
-        "submit",
-        applyLeave
-    );
+    addListener("leave-form", "submit", applyLeave);
 
-    // Navigation
-    addListener(
-        "show-login",
-        "click",
-        showLogin
-    );
+    addListener("show-login", "click", showLogin);
 
-    addListener(
-        "show-registration",
-        "click",
-        showRegistration
-    );
+    addListener("show-registration", "click", showRegistration);
 
-    // Initial display
     toggleSection("login-section", true);
     toggleSection("registration-section", false);
     toggleSection("balance-section", false);

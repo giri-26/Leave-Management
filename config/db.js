@@ -1,9 +1,23 @@
-// config/db.js
 const mongoose = require("mongoose");
 
 const connectDB = async () => {
-        await mongoose.connect(process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/leave-management", { serverSelectionTimeoutMS: 5000 });
-        console.log("MongoDB connected successfully");
+    try {
+        const mongoURI = process.env.MONGODB_URI;
+
+        if (!mongoURI) {
+            throw new Error("MONGODB_URI is not defined in .env");
+        }
+
+        await mongoose.connect(mongoURI, {
+            serverSelectionTimeoutMS: 10000
+        });
+
+        console.log("MongoDB Atlas connected successfully");
+
+    } catch (error) {
+        console.error("MongoDB connection failed:", error.message);
+        throw error;
+    }
 };
 
 module.exports = connectDB;
