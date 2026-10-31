@@ -1,130 +1,123 @@
-/* Reset default margin and padding */
-body,
-h1,
-h2,
-p,
-input,
-button,
-select {
+
+* {
+    box-sizing: border-box;
     margin: 0;
     padding: 0;
-    box-sizing: border-box;
 }
 
-/* Body Styles */
 body {
     font-family: Arial, sans-serif;
-    background-color: #f4f4f4;
-    color: #333;
+    background: #f4f5f7;
+    padding: 30px 15px;
+    color: #222;
 }
 
-/* Container Styles */
 .container {
-    max-width: 600px;
-    margin: 50px auto;
-    padding: 20px;
+    max-width: 650px;
+    margin: 20px auto;
+    padding: 30px;
     background: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.12);
 }
 
-/* Heading Styles */
 h1 {
     text-align: center;
+    margin-bottom: 25px;
+}
+
+h2 {
+    margin-bottom: 18px;
+}
+
+section {
     margin-bottom: 20px;
 }
 
-/* Form Section Styles */
-.form-section {
-    margin-bottom: 30px;
-    /* Increased margin for better separation */
-}
-
-/* Label Styles */
 label {
     display: block;
-    margin: 10px 0 5px;
+    margin: 15px 0 7px;
 }
 
-/* Input and Select Styles */
-input[type="text"],
-input[type="email"],
-input[type="number"],
-select {
+input, select {
     width: 100%;
-    padding: 10px;
-    margin-bottom: 15px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
+    padding: 13px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 15px;
+    background: #eaf2fa;
 }
 
-/* Button Styles */
-.btn {
+button {
     width: 100%;
-    padding: 10px;
-    margin: 10px 0;
-    /* Added margin for spacing between buttons */
-    background-color: #5cb85c;
+    padding: 13px;
+    margin-top: 15px;
+    background: #087a3c;
     color: white;
     border: none;
-    border-radius: 5px;
-    cursor: pointer;
+    border-radius: 6px;
     font-size: 16px;
-    transition: background-color 0.3s ease;
-    /* Smooth transition */
-}
-
-.btn:hover {
-    background-color: #4cae4c;
-}
-
-/* Link Button Styles */
-.link-btn {
-    background: none;
-    color: #007bff;
-    border: none;
     cursor: pointer;
-    margin-top: 10px;
-    /* Added margin for spacing */
 }
 
-.link-btn:hover {
+button:hover {
+    background: #05612f;
+}
+
+.logout {
+    background: #555;
+}
+
+.balance-card {
+    background: #edf7ef;
+    padding: 18px;
+    border-radius: 8px;
+    margin: 20px 0;
+}
+
+.balance-card p {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px;
+    font-size: 17px;
+}
+
+.balance-card strong {
+    color: #087a3c;
+}
+
+.leave-card {
+    margin-top: 30px;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+a {
+    color: #1764a0;
     text-decoration: underline;
 }
 
-/* Response Message Styles */
-#response-message {
+p {
     margin-top: 15px;
-    color: red;
 }
 
-/* Balance Section Styles */
-.balance-section {
-    margin-top: 20px;
+#response-message,
+#registration-response {
+    color: #087a3c;
+    font-weight: 500;
 }
 
-/* Apply Leave Section Styles */
-.apply-leave-section {
-    margin-top: 20px;
+[hidden] {
+    display: none !important;
 }
 
-/* Additional Styles for Flexibility */
-@media (max-width: 600px) {
+@media (max-width: 500px) {
     .container {
-        width: 90%;
-        padding: 10px;
+        padding: 20px;
     }
 
-    .btn {
-        font-size: 14px;
-    }
-
-    label {
-        font-size: 14px;
-    }
-
-    input,
-    select {
-        font-size: 14px;
+    h1 {
+        font-size: 24px;
     }
 }

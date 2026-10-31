@@ -1,326 +1,212 @@
-// API Configuration
-const API_BASE_URL = "http://localhost:5050/api";
 
-let userId = null;
+let currentUser = null;
 
-// Get HTML element
-function getElement(id) {
-    return document.getElementById(id);
+const getElement = id => document.getElementById(id);
+
+function getUsers() {
+    return JSON.parse(localStorage.getItem("leaveUsers") || "{}");
 }
 
-// Display response messages
+function saveUsers(users) {
+    localStorage.setItem("leaveUsers", JSON.stringify(users));
+}
+
 function showMessage(message, id = "response-message") {
-    const element = getElement(id);
-
-    if (element) {
-        element.textContent = message;
-    }
+    getElement(id).textContent = message;
 }
 
-// Show or hide HTML sections
-function toggleSection(id, show) {
-    const element = getElement(id);
-
-    if (element) {
-        element.style.display = show ? "block" : "none";
-    }
-}
-
-// Show login page
 function showLogin() {
-    toggleSection("login-section", true);
-    toggleSection("registration-section", false);
+    getElement("login-section").hidden = false;
+    getElement("registration-section").hidden = true;
+    getElement("dashboard-section").hidden = true;
 }
 
-// Show registration page
 function showRegistration() {
-    toggleSection("registration-section", true);
-    toggleSection("login-section", false);
+    getElement("login-section").hidden = true;
+    getElement("registration-section").hidden = false;
+    getElement("dashboard-section").hidden = true;
 }
 
-// Send API request
-async function apiRequest(endpoint, options = {}) {
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, options);
+function showDashboard() {
+    if (!currentUser) return;
 
-    const responseText = await response.text();
+    getElement("login-section").hidden = true;
+    getElement("registration-section").hidden = true;
+    getElement("dashboard-section").hidden = false;
 
-    let data = {};
+    getElement("username-display").textContent = currentUser.username;
+    getElement("roll-number-display").textContent = currentUser.rollNumber;
 
-    if (responseText) {
-        try {
-            data = JSON.parse(responseText);
-        } catch {
-            throw new Error(
-                `Invalid server response. HTTP ${response.status}`
-            );
-        }
-    }
-
-    if (!response.ok) {
-        throw new Error(
-            data.message || `Request failed. HTTP ${response.status}`
-        );
-    }
-
-    return data;
+    getElement("casual-leave-display").textContent = currentUser.casualLeave;
+    getElement("medical-leave-display").textContent = currentUser.medicalLeave;
 }
 
-// Register new user
-async function registerUser(event) {
+// Register user
+function registerUser(event) {
     event.preventDefault();
 
     const username = getElement("username").value.trim();
-    const email = getElement("reg-email").value.trim();
+    const email = getElement("reg-email").value.trim().toLowerCase();
     const rollNumber = getElement("roll-number").value.trim();
 
-    const casualLeave = Number(
-        getElement("casual-leave").value
-    );
-
-    const medicalLeave = Number(
-        getElement("medical-leave").value
-    );
+    const casualLeave = Number(getElement("casual-leave").value);
+    const medicalLeave = Number(getElement("medical-leave").value);
 
     if (!username || !email || !rollNumber) {
-        showMessage(
-            "Please fill all required fields",
-            "registration-response"
-        );
+        showMessage("Please fill all fields.", "registration-response");
         return;
     }
 
     if (
-        !Number.isInteger(casualLeave) ||
+        !Number.isSafeInteger(casualLeave) ||
         casualLeave < 0 ||
-        !Number.isInteger(medicalLeave) ||
+        !Number.isSafeInteger(medicalLeave) ||
         medicalLeave < 0
     ) {
-        showMessage(
-            "Leave balances must be non-negative whole numbers",
-            "registration-response"
-        );
+        showMessage("Enter valid leave balances.", "registration-response");
         return;
     }
 
-    try {
-        const data = await apiRequest("/register", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                username,
-                email,
-                rollNumber,
-                casualLeave,
-                medicalLeave
-            })
-        });
+    const users = getUsers();
 
-        showMessage(
-            data.message,
-            "registration-response"
-        );
-
-        getElement("registration-form").reset();
-
-        showLogin();
-
-        showMessage("Registration successful. Please login.");
-
-    } catch (error) {
-        console.error("Registration error:", error);
-
-        showMessage(
-            error.message,
-            "registration-response"
-        );
+    if (users[email]) {
+        showMessage("User already exists.", "registration-response");
+        return;
     }
+
+    users[email] = {
+        username,
+        email,
+        rollNumber,
+        casualLeave,
+        medicalLeave
+    };
+
+    saveUsers(users);
+
+    getElement("registration-form").reset();
+
+    showMessage("Registration successful. Please login.", "response-message");
+
+    showLogin();
 }
 
 // Login user
-async function loginUser(event) {
+function loginUser(event) {
     event.preventDefault();
 
-    const email = getElement("email").value.trim();
+    const email = getElement("email").value.trim().toLowerCase();
+    const users = getUsers();
 
-    if (!email) {
-        showMessage("Please enter your email");
+    if (!users[email]) {
+        showMessage("User not found. Please register.");
         return;
     }
 
-    try {
-        const data = await apiRequest("/login", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({ email })
-        });
+    currentUser = email;
 
-        userId = data.userId;
-
-        getElement("username-display").textContent =
-            data.username;
-
-        getElement("roll-number-display").textContent =
-            data.rollNumber;
-
-        getElement("casual-leave-display").textContent =
-            data.casualLeave;
-
-        getElement("medical-leave-display").textContent =
-            data.medicalLeave;
-
-        toggleSection("login-section", false);
-        toggleSection("registration-section", false);
-        toggleSection("balance-section", true);
-        toggleSection("apply-leave-section", true);
-        toggleSection("logout-button", true);
-
-        showMessage("Login successful");
-
-    } catch (error) {
-        console.error("Login error:", error);
-        showMessage(error.message);
-    }
-}
-
-// Logout user
-function logoutUser() {
-    userId = null;
-
-    toggleSection("balance-section", false);
-    toggleSection("apply-leave-section", false);
-    toggleSection("logout-button", false);
-    toggleSection("registration-section", false);
-
-    getElement("username-display").textContent = "";
-    getElement("roll-number-display").textContent = "";
-
-    getElement("casual-leave-display").textContent = "0";
-    getElement("medical-leave-display").textContent = "0";
+    const user = users[email];
+    currentUser = user;
 
     getElement("login-form").reset();
 
-    showLogin();
+    showDashboard();
 
-    showMessage("Logged out successfully");
+    showMessage("Login successful.");
 }
 
-// Refresh leave balance
-async function refreshLeaveBalance() {
-    if (!userId) {
-        showMessage("Please login first");
+// Refresh balance
+function refreshLeaveBalance() {
+    if (!currentUser) return;
+
+    const users = getUsers();
+    currentUser = users[currentUser.email];
+
+    if (!currentUser) {
+        logoutUser();
         return;
     }
 
-    try {
-        const data = await apiRequest(
-            `/leave-balance/${userId}`
-        );
-
-        getElement("casual-leave-display").textContent =
-            data.casualLeave;
-
-        getElement("medical-leave-display").textContent =
-            data.medicalLeave;
-
-        showMessage("Leave balance updated");
-
-    } catch (error) {
-        console.error("Balance error:", error);
-        showMessage(error.message);
-    }
+    showDashboard();
+    showMessage("Leave balance updated.");
 }
 
-// Apply for leave
-async function applyLeave(event) {
+// Apply leave
+function applyLeave(event) {
     event.preventDefault();
 
-    if (!userId) {
-        showMessage("Please login first");
+    if (!currentUser) {
+        showMessage("Please login first.");
         return;
     }
 
     const type = getElement("leave-type").value;
+    const days = Number(getElement("leave-days").value);
 
-    const days = Number(
-        getElement("leave-days").value
-    );
-
-    if (!Number.isInteger(days) || days <= 0) {
-        showMessage("Enter a valid number of days");
+    if (!Number.isSafeInteger(days) || days <= 0) {
+        showMessage("Enter a valid number of days.");
         return;
     }
 
-    if (type !== "casual" && type !== "medical") {
-        showMessage("Please select a valid leave type");
+    const users = getUsers();
+    const user = users[currentUser.email];
+
+    const field = type === "casual" ? "casualLeave" : "medicalLeave";
+
+    if (user[field] < days) {
+        showMessage("Insufficient leave balance.");
         return;
     }
 
-    try {
-        const data = await apiRequest(
-            `/apply-leave/${userId}`,
-            {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    type,
-                    days
-                })
-            }
-        );
+    user[field] -= days;
 
-        getElement("casual-leave-display").textContent =
-            data.casualLeave;
+    users[currentUser.email] = user;
 
-        getElement("medical-leave-display").textContent =
-            data.medicalLeave;
+    saveUsers(users);
 
-        showMessage(data.message);
+    currentUser = user;
 
-        getElement("leave-form").reset();
+    showDashboard();
 
-    } catch (error) {
-        console.error("Apply leave error:", error);
-        showMessage(error.message);
-    }
+    getElement("leave-form").reset();
+
+    showMessage("Leave applied successfully.");
 }
 
-// Initialize application
+// Logout
+function logoutUser() {
+    currentUser = null;
+
+    getElement("login-form").reset();
+    getElement("leave-form").reset();
+
+    showLogin();
+
+    showMessage("Logged out successfully.");
+}
+
+// Initialize
 document.addEventListener("DOMContentLoaded", () => {
 
-    function addListener(id, event, handler) {
-        const element = getElement(id);
+    getElement("login-form").addEventListener("submit", loginUser);
 
-        if (element) {
-            element.addEventListener(event, handler);
-        } else {
-            console.error(`Missing HTML element: ${id}`);
-        }
-    }
+    getElement("registration-form").addEventListener("submit", registerUser);
 
-    addListener("registration-form", "submit", registerUser);
+    getElement("leave-form").addEventListener("submit", applyLeave);
 
-    addListener("login-form", "submit", loginUser);
+    getElement("show-registration").addEventListener("click", event => {
+        event.preventDefault();
+        showRegistration();
+    });
 
-    addListener("logout-button", "click", logoutUser);
+    getElement("show-login").addEventListener("click", event => {
+        event.preventDefault();
+        showLogin();
+    });
 
-    addListener("refresh-balance", "click", refreshLeaveBalance);
+    getElement("logout-button").addEventListener("click", logoutUser);
 
-    addListener("leave-form", "submit", applyLeave);
+    getElement("refresh-balance").addEventListener("click", refreshLeaveBalance);
 
-    addListener("show-login", "click", showLogin);
-
-    addListener("show-registration", "click", showRegistration);
-
-    toggleSection("login-section", true);
-    toggleSection("registration-section", false);
-    toggleSection("balance-section", false);
-    toggleSection("apply-leave-section", false);
-    toggleSection("logout-button", false);
-
+    showLogin();
 });
